@@ -24,12 +24,18 @@ class AuroraFunction:
     def __init__(self, decl, closure): self.declaration=decl; self.closure=closure
     def call(self, args, interp):
         env = Environment(self.closure)
-        if len(args) != len(self.declaration.params):
-            raise AuroraRuntimeError(f"\'{self.declaration.name}\' expects {len(self.declaration.params)} args, got {len(args)}")
-        for p,a in zip(self.declaration.params, args): env.define(p.name, a, mutable=True)
-        try: interp.exec_block(self.declaration.body, env)
-        except ReturnException as r: return r.value
-        return None
+        decl = self.declaration
+        if len(args) != len(decl.params):
+            raise AuroraRuntimeError(f"\'{decl.name}\' expects {len(decl.params)} args, got {len(args)}", decl.line)
+        for p,a in zip(decl.params, args):
+            if p.type_name is not None:  # untyped params (type_name None) accept anything
+                interp._check_type(p.type_name, a, p.name, decl.line)
+            env.define(p.name, a, mutable=True, type_name=p.type_name)
+        try: interp.exec_block(decl.body, env); result = None
+        except ReturnException as r: result = r.value
+        if decl.return_type is not None:  # enforce the declared return type
+            interp._check_type(decl.return_type, result, f"return value of \'{decl.name}\'", decl.line)
+        return result
     def bind(self, inst):
         """Creates a bound method with 'self' in its environment."""
         env = Environment(self.closure); env.define("self", inst, mutable=False)
@@ -65,7 +71,7 @@ class AuroraInstance:
 class Interpreter:
     def __init__(self, output_fn=print):
         self.out = output_fn
-        self.global_env = Environment()
+        self.global_env = Environment(type_checker=self._check_type)
         self._builtins()
 
     def _builtins(self):
@@ -101,8 +107,9 @@ class Interpreter:
         if isinstance(v, AuroraInstance): return f"<{v.klass.name}>"
         return str(v)
 
-    def _check_type(self, tname, val, name):
-        """Validates that a value matches its declared type (for var declarations)."""
+    def _check_type(self, tname, val, name, line=None):
+        """Validates that a value matches its declared type (var decls, reassignment,
+        function parameters, and return values). 'auto'/None types are unchecked."""
         ok = {"Int": lambda v: isinstance(v,int) and not isinstance(v,bool),
               "Float": lambda v: isinstance(v,(int,float)) and not isinstance(v,bool),
               "String": lambda v: isinstance(v,str),
@@ -111,7 +118,7 @@ class Interpreter:
               "Map": lambda v: isinstance(v,dict)}
         chk = ok.get(tname)
         if chk and not chk(val):
-            raise AuroraRuntimeError(f"Type error: \'{name}\' declared as {tname} but got {self._tname(val)}")
+            raise AuroraRuntimeError(f"Type error: \'{name}\' declared as {tname} but got {self._tname(val)}", line)
 
     def run(self, program): self.exec_block(program.statements, self.global_env)
 
@@ -127,13 +134,13 @@ class Interpreter:
     # ── Statement executors ────────────────────────────────────────────────
     def exec_VarDecl(self, n, env):
         """Handles VarDecl: evaluates initializer, checks type, defines variable."""
-        v = self.eval(n.initializer, env); self._check_type(n.type_name, v, n.name)
-        env.define(n.name, v, mutable=n.mutable)
+        v = self.eval(n.initializer, env); self._check_type(n.type_name, v, n.name, n.line)
+        env.define(n.name, v, mutable=n.mutable, type_name=n.type_name)
 
     def exec_AssignStatement(self, n, env):
         """Handles assignment: supports Identifier, IndexAccess, and PropertyAccess targets."""
         v = self.eval(n.value, env); t = n.target
-        if isinstance(t, Identifier): env.assign(t.name, v)
+        if isinstance(t, Identifier): env.assign(t.name, v, n.line)
         elif isinstance(t, IndexAccess):
             obj=self.eval(t.obj,env); idx=self.eval(t.index,env)
             if isinstance(obj,list):

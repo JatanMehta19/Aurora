@@ -61,17 +61,17 @@ class Parser:
 
     def parse_var(self):
         """varDecl → type ('mut')? IDENTIFIER '=' expression ';'"""
-        type_name = self.advance().value
+        tok = self.advance(); type_name = tok.value
         mutable = bool(self.match(TokenType.MUT) and self.advance())
         name = self.expect(TokenType.IDENTIFIER).value
         self.expect(TokenType.EQUAL)
         init = self.parse_expr()
         self.expect(TokenType.SEMICOLON)
-        return VarDecl(type_name=type_name, name=name, mutable=mutable, initializer=init)
+        return VarDecl(type_name=type_name, name=name, mutable=mutable, initializer=init, line=tok.line)
 
     def parse_func(self):
         """funcDecl → 'func' IDENTIFIER '(' params? ')' (':' type)? block"""
-        self.expect(TokenType.FUNC)
+        ftok = self.expect(TokenType.FUNC)
         name = self.expect(TokenType.IDENTIFIER).value
         self.expect(TokenType.LPAREN)
         params = [] if self.match(TokenType.RPAREN) else self.parse_params()
@@ -81,7 +81,7 @@ class Parser:
         self.expect(TokenType.LBRACE)
         body = self.parse_block()
         self.expect(TokenType.RBRACE)
-        return FuncDecl(name=name, params=params, return_type=ret, body=body)
+        return FuncDecl(name=name, params=params, return_type=ret, body=body, line=ftok.line)
 
     def parse_params(self):
         """params → param (',' param)*"""
@@ -156,10 +156,11 @@ class Parser:
 
     def parse_expr_stmt(self):
         """exprStmt → expression ('=' expression)? ';'  (assignment or bare expr)"""
+        ln = self.cur().line
         expr = self.parse_expr()
         if self.match(TokenType.COLON_EQUAL):
             self.advance(); val = self.parse_expr(); self.expect(TokenType.SEMICOLON)
-            return AssignStatement(target=expr, value=val)
+            return AssignStatement(target=expr, value=val, line=ln)
         self.expect(TokenType.SEMICOLON)
         return ExprStatement(expression=expr)
 
