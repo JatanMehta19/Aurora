@@ -76,6 +76,29 @@ python aurora.py examples/fizzbuzz.aur
 
 ---
 
+## Running Tests
+
+The language itself has **zero runtime dependencies**. Tests use
+[pytest](https://pytest.org), which is a **dev-only** dependency:
+
+```bash
+pip install -r requirements-dev.txt   # installs pytest only
+python -m pytest                       # run the whole suite
+```
+
+The suite (`tests/`) covers:
+
+- **Golden output** — every program in `examples/` is run in-process and its
+  stdout is compared against a committed snapshot in `tests/golden/`.
+- **Lexer** — token types, `//` comments, string escapes, and lexical errors.
+- **Parser** — operator-precedence AST shape and `ParseError` line numbers.
+- **Interpreter** — closures, immutability, division/modulo by zero,
+  out-of-bounds indexing, undefined variables/properties, and recursion.
+- **Type soundness** — wrong-type reassignment, arguments, and return values
+  are rejected at runtime.
+
+---
+
 ## 📝 Language Examples
 
 ### Hello World
