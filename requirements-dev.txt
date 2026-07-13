@@ -1,0 +1,4 @@
+# Development-only dependencies.
+# The Aurora language itself has ZERO runtime dependencies (pure standard
+# library); pytest is only needed to run the test suite.
+pytest>=7.0
