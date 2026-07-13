@@ -1,3 +1,4 @@
+import operator
 from .ast_nodes import *
 from .environment import Environment, AuroraRuntimeError
 
@@ -77,10 +78,15 @@ class Interpreter:
     def _builtins(self):
         """Registers built-in functions (len, type, int, float, str, bool)."""
         def bl(n,f): self.global_env.define(n, BuiltinFunction(n,f), mutable=False)
+        def _conv(name, fn, a):
+            """Wraps int()/float() so bad input raises a clean AuroraRuntimeError, not a Python one."""
+            if len(a)!=1: raise AuroraRuntimeError(f"{name}() expects 1 arg")
+            try: return fn(a[0])
+            except (ValueError, TypeError): raise AuroraRuntimeError(f"Cannot convert {self._tname(a[0])} to {name.capitalize()}")
         bl("len",   lambda a: len(a[0]) if len(a)==1 and isinstance(a[0],(str,list,dict)) else (_ for _ in ()).throw(AuroraRuntimeError("len() expects 1 collection arg")))
         bl("type",  lambda a: self._tname(a[0]) if len(a)==1 else (_ for _ in ()).throw(AuroraRuntimeError("type() expects 1 arg")))
-        bl("int",   lambda a: int(a[0]) if len(a)==1 else (_ for _ in ()).throw(AuroraRuntimeError("int() expects 1 arg")))
-        bl("float", lambda a: float(a[0]) if len(a)==1 else (_ for _ in ()).throw(AuroraRuntimeError("float() expects 1 arg")))
+        bl("int",   lambda a: _conv("int", int, a))
+        bl("float", lambda a: _conv("float", float, a))
         bl("str",   lambda a: self._str(a[0]) if len(a)==1 else (_ for _ in ()).throw(AuroraRuntimeError("str() expects 1 arg")))
         bl("bool",  lambda a: bool(a[0]) if len(a)==1 else (_ for _ in ()).throw(AuroraRuntimeError("bool() expects 1 arg")))
 
@@ -120,6 +126,17 @@ class Interpreter:
         if chk and not chk(val):
             raise AuroraRuntimeError(f"Type error: \'{name}\' declared as {tname} but got {self._tname(val)}", line)
 
+    def _coerce(self, tname, val):
+        """Coerces an Int to a Float when the declared type is Float (5 -> 5.0)."""
+        if tname == "Float" and isinstance(val, int) and not isinstance(val, bool): return float(val)
+        return val
+
+    def _mapkey(self, key):
+        """Validates that a value can be used as a Map key (List/Map are unhashable)."""
+        if isinstance(key, (list, dict)):
+            raise AuroraRuntimeError(f"Map key must be a hashable type (Int, Float, String, or Bool), got {self._tname(key)}")
+        return key
+
     def run(self, program): self.exec_block(program.statements, self.global_env)
 
     def exec_block(self, stmts, env):
@@ -135,6 +152,7 @@ class Interpreter:
     def exec_VarDecl(self, n, env):
         """Handles VarDecl: evaluates initializer, checks type, defines variable."""
         v = self.eval(n.initializer, env); self._check_type(n.type_name, v, n.name, n.line)
+        v = self._coerce(n.type_name, v)
         env.define(n.name, v, mutable=n.mutable, type_name=n.type_name)
 
     def exec_AssignStatement(self, n, env):
@@ -147,7 +165,7 @@ class Interpreter:
                 if not isinstance(idx,int) or isinstance(idx,bool): raise AuroraRuntimeError("List index must be Int")
                 if idx<0 or idx>=len(obj): raise AuroraRuntimeError(f"Index {idx} out of bounds")
                 obj[idx]=v
-            elif isinstance(obj,dict): obj[idx]=v
+            elif isinstance(obj,dict): obj[self._mapkey(idx)]=v
             else: raise AuroraRuntimeError("Cannot index-assign non-List/Map")
         elif isinstance(t, PropertyAccess):
             obj=self.eval(t.obj,env)
@@ -205,7 +223,10 @@ class Interpreter:
     def eval_BoolLiteral(self,n,e): return n.value
     def eval_NullLiteral(self,n,e): return None
     def eval_ListLiteral(self,n,e): return [self.eval(x,e) for x in n.elements]
-    def eval_MapLiteral(self,n,e): return {self.eval(k,e):self.eval(v,e) for k,v in n.pairs}
+    def eval_MapLiteral(self,n,e):
+        m = {}
+        for k,v in n.pairs: m[self._mapkey(self.eval(k,e))] = self.eval(v,e)
+        return m
     def eval_Identifier(self,n,e): return e.get(n.name)
 
     def eval_BinaryExpression(self, n, env):
@@ -229,6 +250,7 @@ class Interpreter:
             self._num(l,r,op); return l-r
         if op == "*":
             if isinstance(l,str) and isinstance(r,int) and not isinstance(r,bool): return l*r
+            if isinstance(r,str) and isinstance(l,int) and not isinstance(l,bool): return r*l  # Int * String
             self._num(l,r,op); return l*r
         if op == "/":
             self._num(l,r,op)
@@ -243,7 +265,7 @@ class Interpreter:
         if op in ("<","<=",">",">="):
             if type(l)!=type(r) and not (isinstance(l,(int,float)) and isinstance(r,(int,float))):
                 raise AuroraRuntimeError(f"Cannot compare {self._tname(l)} and {self._tname(r)}")
-            return eval(f"l {op} r")
+            return {"<":operator.lt, "<=":operator.le, ">":operator.gt, ">=":operator.ge}[op](l, r)
         if op == "..":
             if not isinstance(l,int) or not isinstance(r,int): raise AuroraRuntimeError("Range .. needs Int")
             return AuroraRange(l,r)
@@ -281,6 +303,7 @@ class Interpreter:
             if idx<0 or idx>=len(obj): raise AuroraRuntimeError(f"Index {idx} out of bounds (len={len(obj)})")
             return obj[idx]
         if isinstance(obj,dict):
+            idx = self._mapkey(idx)
             if idx not in obj: raise AuroraRuntimeError(f"Key {idx!r} not in Map")
             return obj[idx]
         if isinstance(obj,str):
@@ -320,6 +343,6 @@ class Interpreter:
         """Returns bound methods for Map instances (keys, values, contains, get)."""
         if nm=="keys": return BuiltinFunction("keys", lambda a: list(m.keys()))
         if nm=="values": return BuiltinFunction("values", lambda a: list(m.values()))
-        if nm=="contains": return BuiltinFunction("contains", lambda a: a[0] in m)
-        if nm=="get": return BuiltinFunction("get", lambda a: m.get(a[0]))
+        if nm=="contains": return BuiltinFunction("contains", lambda a: self._mapkey(a[0]) in m)
+        if nm=="get": return BuiltinFunction("get", lambda a: m.get(self._mapkey(a[0])))
         raise AuroraRuntimeError(f"Map has no method '{nm}'")
