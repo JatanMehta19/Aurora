@@ -34,9 +34,9 @@ class CallExpression(ASTNode): callee: ASTNode; args: List[ASTNode]
 @dataclass
 class Program(ASTNode): statements: List[ASTNode] = field(default_factory=list)
 @dataclass
-class VarDecl(ASTNode): type_name: str; name: str; mutable: bool; initializer: ASTNode
+class VarDecl(ASTNode): type_name: str; name: str; mutable: bool; initializer: ASTNode; line: Optional[int] = None
 @dataclass
-class AssignStatement(ASTNode): target: ASTNode; value: ASTNode
+class AssignStatement(ASTNode): target: ASTNode; value: ASTNode; line: Optional[int] = None
 @dataclass
 class PrintStatement(ASTNode): expression: ASTNode
 @dataclass
@@ -56,6 +56,6 @@ class ImportStatement(ASTNode): module_name: str
 @dataclass
 class Param(ASTNode): name: str; type_name: Optional[str]
 @dataclass
-class FuncDecl(ASTNode): name: str; params: list; return_type: Optional[str]; body: list
+class FuncDecl(ASTNode): name: str; params: list; return_type: Optional[str]; body: list; line: Optional[int] = None
 @dataclass
 class ClassDecl(ASTNode): name: str; methods: list
