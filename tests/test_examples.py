@@ -9,7 +9,10 @@ import pytest
 
 from conftest import EXAMPLES_DIR, GOLDEN_DIR
 
-EXAMPLES = ["hello", "datatypes", "control", "functions", "classes", "errors", "fizzbuzz"]
+EXAMPLES = [
+    "hello", "datatypes", "control", "functions", "classes", "errors", "fizzbuzz",
+    "collections", "strings", "loops", "nested", "mutability",
+]
 
 
 def _read(path):

@@ -1,0 +1,18 @@
+// Mutability & immutability
+Int mut counter = 0;
+counter := counter + 1;
+counter := counter + 1;
+print("counter (mut)   : " + str(counter));
+
+String name = "Aurora";
+print("name (immutable): " + name);
+// An immutable binding cannot be reassigned:
+//   name := "Other";   // -> Runtime Error: Cannot reassign immutable variable 'name'
+
+List mut queue = [];
+queue.push("first");
+queue.push("second");
+print("queue           : " + str(queue));
+
+auto pi = 3.14159;
+print("auto-typed pi   : " + str(pi));

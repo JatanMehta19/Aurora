@@ -15,9 +15,12 @@ def load_examples():
     ex = {}
     edir = os.path.join(os.path.dirname(__file__), 'examples')
     # fixed display order for the combo-box
-    order = ['hello','datatypes','control','functions','classes','errors','fizzbuzz']
+    order = ['hello','datatypes','control','functions','classes','errors','fizzbuzz',
+             'collections','strings','loops','nested','mutability']
     labels = ['1 Hello World','2 Data Types','3 Control Flow',
-              '4 Functions & Recursion','5 Classes','6 Error Handling','7 FizzBuzz']
+              '4 Functions & Recursion','5 Classes','6 Error Handling','7 FizzBuzz',
+              '8 Lists & Maps','9 String Methods','10 Loops & Ranges',
+              '11 Nested Data','12 Mutability']
     for label, fname in zip(labels, order):
         path = os.path.join(edir, fname+'.aur')
         if os.path.exists(path):

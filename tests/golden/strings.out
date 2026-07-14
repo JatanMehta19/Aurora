@@ -1,0 +1,11 @@
+original    : Hello, Aurora
+upper       : HELLO, AURORA
+lower       : hello, aurora
+length      : 13
+has 'Aurora': true
+first char  : H
+split       : [red, green, blue]
+part count  : 3
+  - red
+  - green
+  - blue

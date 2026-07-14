@@ -1,0 +1,16 @@
+// Lists & Maps manipulation
+List mut nums = [3, 1, 4, 1, 5];
+nums.push(9);
+print("nums        : " + str(nums));
+print("length      : " + str(nums.len()));
+print("contains 4  : " + str(nums.contains(4)));
+nums[0] := 99;
+print("after set   : " + str(nums));
+auto last = nums.pop();
+print("popped      : " + str(last));
+
+Map mut ages = {"Alice": 30, "Bob": 25};
+ages["Carol"] := 27;
+print("keys        : " + str(ages.keys()));
+print("Bob's age   : " + str(ages["Bob"]));
+print("has Dave    : " + str(ages.contains("Dave")));

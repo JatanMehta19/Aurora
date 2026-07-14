@@ -1,8 +1,10 @@
 # Aurora Language
 
-> A fully interpreted, statically-typed programming language built from scratch in Python.
+> A fully interpreted, type-annotated programming language with runtime-enforced type checking, built from scratch in Python.
 
 Aurora is a custom programming language featuring a hand-written lexer, recursive-descent parser, AST-based interpreter, and a built-in dark-themed IDE — all implemented in pure Python with zero external dependencies.
+
+Variables, function parameters, and return values carry declared types (`Int`, `Float`, `String`, `Bool`, `List`, `Map`, or inferred `auto`). Because Aurora is a tree-walking interpreter, these types are **enforced at runtime** — mismatches at declaration, reassignment, argument passing, or return raise a clear error rather than being caught by a separate compile step.
 
 ---
 
@@ -46,14 +48,12 @@ aurora/
 │   ├── parser.py      # Recursive-descent parser — builds AST from tokens
 │   ├── environment.py # Scoped variable environment
 │   └── interpreter.py # Tree-walking interpreter — executes the AST
-└── examples/
-    ├── hello.aur
-    ├── datatypes.aur
-    ├── control.aur
-    ├── functions.aur
-    ├── classes.aur
-    ├── errors.aur
-    └── fizzbuzz.aur
+├── examples/          # 12 sample programs (.aur)
+│   ├── hello.aur          datatypes.aur    control.aur
+│   ├── functions.aur      classes.aur      errors.aur
+│   ├── fizzbuzz.aur       collections.aur  strings.aur
+│   └── loops.aur          nested.aur       mutability.aur
+└── tests/             # pytest suite (dev-only)
 ```
 
 ---
@@ -218,6 +218,12 @@ Source Code
 
 ## IDE Screenshot
 
+![Aurora IDE screenshot](assets/ide-screenshot.png)
+
+> _Placeholder:_ run `python gui.py`, take a screenshot, and save it to
+> `assets/ide-screenshot.png` to replace the image above. See
+> [`assets/README.md`](assets/README.md) for details.
+
 The built-in IDE features:
 - Syntax highlighting (keywords, strings, numbers, comments)
 - Example program dropdown (12 built-in examples)
@@ -226,3 +232,19 @@ The built-in IDE features:
 - Error output highlighted in red
 
 ---
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+---
+
+## Repository Metadata
+
+Suggested values for the GitHub repo's **About** panel:
+
+**Description:**
+> An interpreted toy programming language with typed variables, runtime type checking, classes, and a built-in Tkinter IDE — hand-written lexer, parser, and tree-walking interpreter in pure Python, zero dependencies.
+
+**Topics:**
+`programming-language` · `interpreter` · `lexer` · `parser` · `tree-walking-interpreter` · `ast` · `language-design` · `python` · `tkinter` · `repl` · `education` · `no-dependencies`
