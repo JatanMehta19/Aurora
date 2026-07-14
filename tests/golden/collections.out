@@ -1,0 +1,8 @@
+nums        : [3, 1, 4, 1, 5, 9]
+length      : 6
+contains 4  : true
+after set   : [99, 1, 4, 1, 5, 9]
+popped      : 9
+keys        : [Alice, Bob, Carol]
+Bob's age   : 25
+has Dave    : false

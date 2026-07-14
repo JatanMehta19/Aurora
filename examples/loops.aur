@@ -1,0 +1,27 @@
+// Loops & ranges
+print("Countup 1..5:");
+for i in 1..5 {
+    print("  i = " + str(i));
+}
+
+print("Sum of 1..100:");
+Int mut total = 0;
+for n in 1..100 {
+    total := total + n;
+}
+print("  total = " + str(total));
+
+print("Even numbers under 10:");
+Int mut k = 0;
+while k < 10 {
+    if k % 2 == 0 {
+        print("  " + str(k));
+    }
+    k := k + 1;
+}
+
+print("Break at 3:");
+for j in 1..10 {
+    if j == 3 { break; }
+    print("  j = " + str(j));
+}

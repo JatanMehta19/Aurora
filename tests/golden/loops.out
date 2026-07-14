@@ -1,0 +1,17 @@
+Countup 1..5:
+  i = 1
+  i = 2
+  i = 3
+  i = 4
+  i = 5
+Sum of 1..100:
+  total = 5050
+Even numbers under 10:
+  0
+  2
+  4
+  6
+  8
+Break at 3:
+  j = 1
+  j = 2

@@ -1,0 +1,16 @@
+// String methods
+String greeting = "Hello, Aurora";
+print("original    : " + greeting);
+print("upper       : " + greeting.upper());
+print("lower       : " + greeting.lower());
+print("length      : " + str(greeting.len()));
+print("has 'Aurora': " + str(greeting.contains("Aurora")));
+print("first char  : " + greeting[0]);
+
+String csv = "red,green,blue";
+auto parts = csv.split(",");
+print("split       : " + str(parts));
+print("part count  : " + str(parts.len()));
+for color in parts {
+    print("  - " + color);
+}

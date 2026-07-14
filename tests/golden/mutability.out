@@ -1,0 +1,4 @@
+counter (mut)   : 2
+name (immutable): Aurora
+queue           : [first, second]
+auto-typed pi   : 3.14159
