@@ -1,5 +1,10 @@
 # Aurora Language
 
+[![tests](https://github.com/JatanMehta19/Aurora_Full_Build/actions/workflows/tests.yml/badge.svg)](https://github.com/JatanMehta19/Aurora_Full_Build/actions/workflows/tests.yml)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](#getting-started)
+
 > A fully interpreted, type-annotated programming language with runtime-enforced type checking, built from scratch in Python.
 
 Aurora is a custom programming language featuring a hand-written lexer, recursive-descent parser, AST-based interpreter, and a built-in dark-themed IDE — all implemented in pure Python with zero external dependencies.
@@ -32,7 +37,12 @@ Variables, function parameters, and return values carry declared types (`Int`, `
 | Built-ins | `print()` `len()` `type()` `str()` `int()` `float()` `bool()` |
 | Error handling | Meaningful runtime errors with line numbers |
 | Comments | `// single-line comments` |
-| Modules | `import moduleName;` |
+
+### Not yet implemented
+
+- **Modules** — `import moduleName;` is recognized by the lexer and parser, but
+  module resolution is not implemented: the interpreter currently acknowledges
+  the statement and continues without loading anything.
 
 ---
 
@@ -219,10 +229,6 @@ Source Code
 ## IDE Screenshot
 
 ![Aurora IDE screenshot](assets/ide-screenshot.png)
-
-> _Placeholder:_ run `python gui.py`, take a screenshot, and save it to
-> `assets/ide-screenshot.png` to replace the image above. See
-> [`assets/README.md`](assets/README.md) for details.
 
 The built-in IDE features:
 - Syntax highlighting (keywords, strings, numbers, comments)
