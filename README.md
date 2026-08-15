@@ -247,10 +247,8 @@ Released under the [MIT License](LICENSE).
 
 ## Repository Metadata
 
-Suggested values for the GitHub repo's **About** panel:
-
 **Description:**
-> An interpreted toy programming language with typed variables, runtime type checking, classes, and a built-in Tkinter IDE — hand-written lexer, parser, and tree-walking interpreter in pure Python, zero dependencies.
+> An interpreted programming language with typed variables, runtime type checking, classes, and a built-in Tkinter IDE — hand-written lexer, parser, and tree-walking interpreter in pure Python, zero dependencies
 
 **Topics:**
 `programming-language` · `interpreter` · `lexer` · `parser` · `tree-walking-interpreter` · `ast` · `language-design` · `python` · `tkinter` · `repl` · `education` · `no-dependencies`
