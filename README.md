@@ -1,3 +1,5 @@
+**[▶ Try Aurora in your browser](https://jatanmehta19.github.io/Aurora/)** — runs entirely client-side. No install, no signup.
+
 # Aurora Language
 
 [![tests](https://github.com/JatanMehta19/Aurora_Full_Build/actions/workflows/tests.yml/badge.svg)](https://github.com/JatanMehta19/Aurora_Full_Build/actions/workflows/tests.yml)
