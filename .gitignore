@@ -6,3 +6,5 @@ __pycache__/
 # Test / tooling artifacts
 .pytest_cache/
 .venv/
+
+/.claude
