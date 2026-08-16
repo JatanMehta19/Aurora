@@ -1,0 +1,189 @@
+/* Catppuccin Mocha — same palette as the desktop IDE (gui.py:9-12) */
+:root {
+  --bg:#1e1e2e; --bg2:#313244; --bg3:#181825;
+  --fg:#cdd6f4; --fg2:#6c7086;
+  --purple:#cba6f7; --blue:#89b4fa; --cyan:#89dceb;
+  --green:#a6e3a1; --red:#f38ba8; --yellow:#f9e2af; --peach:#fab387;
+
+  --mono: ui-monospace, "Cascadia Code", Consolas, "Courier New", monospace;
+  --sans: system-ui, "Segoe UI", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+/* Three rows: header / panes / status bar. */
+body {
+  margin: 0;
+  height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+}
+
+/* ---------- header ---------- */
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--bg2);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--purple);
+}
+
+#examples, #run {
+  font-family: inherit;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--bg2);
+}
+
+#examples {
+  background: var(--bg2);
+  color: var(--fg);
+  min-width: 14rem;
+}
+
+#run {
+  margin-left: auto;          /* pushes Run to the far right */
+  background: var(--green);
+  color: var(--bg3);
+  font-weight: 700;
+  border-color: transparent;
+  cursor: pointer;
+}
+
+#run:disabled {
+  background: var(--bg2);
+  color: var(--fg2);
+  cursor: not-allowed;
+}
+
+/* ---------- panes ---------- */
+
+/* min-height:0 lets grid/flex children shrink so the panes scroll
+   internally instead of stretching the page. */
+main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  min-height: 0;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+section h2 {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+section:first-child  h2 { color: var(--blue); }
+section:last-child   h2 { color: var(--cyan); }
+
+/* Shared text metrics. The highlight overlay and the textarea MUST agree on
+   every one of these or the colored text drifts out of line with the caret. */
+#editor, #highlight, #output {
+  margin: 0;
+  padding: 0.75rem;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  tab-size: 4;
+  /* Cascadia Code renders "<=" as a single "≤" glyph. On a page that teaches
+     Aurora's syntax that shows characters you cannot type, so: off. */
+  font-variant-ligatures: none;
+}
+
+/* --- editor: a highlighted <pre> sitting behind a transparent <textarea> --- */
+
+.editor-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+#editor, #highlight {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--bg2);
+  border-radius: 8px;
+  overflow: auto;
+  /* No soft wrap. Wrapping would reflow differently in the two layers as soon
+     as the textarea's scrollbar narrows it, and the text would misalign. */
+  white-space: pre;
+}
+
+#highlight {
+  background: var(--bg3);
+  color: var(--fg);
+  pointer-events: none;       /* clicks belong to the textarea on top */
+  scrollbar-width: none;      /* only the textarea shows scrollbars */
+}
+#highlight::-webkit-scrollbar { display: none; }
+
+#editor {
+  background: transparent;
+  color: transparent;         /* the glyphs you see come from the overlay */
+  caret-color: var(--fg);     /* ...but the caret must stay visible */
+  resize: none;
+  outline: none;
+}
+
+#editor:focus { border-color: var(--purple); }
+
+/* Token colors — same mapping as gui.py:110-114 */
+.tok-kw  { color: var(--purple); }
+.tok-str { color: var(--green); }
+.tok-num { color: var(--peach); }
+.tok-cmt { color: var(--fg2); font-style: italic; }
+
+/* --- output --- */
+
+#output {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--bg3);
+  color: var(--green);        /* gui.py:98 */
+  border: 1px solid var(--bg2);
+  border-radius: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.error { color: var(--red); }   /* gui.py:102 */
+.info  { color: var(--blue); }  /* gui.py:103 */
+
+/* ---------- status bar ---------- */
+
+footer {
+  padding: 0.45rem 1rem;
+  background: var(--bg3);
+  border-top: 1px solid var(--bg2);
+  color: var(--fg2);
+  font-size: 0.8rem;
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 800px) {
+  main { grid-template-columns: 1fr; }
+  header { flex-wrap: wrap; }
+  #examples { min-width: 0; flex: 1; }
+}
