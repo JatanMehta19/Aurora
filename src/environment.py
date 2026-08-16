@@ -14,10 +14,10 @@ class Environment:
     def define(self, name, value, mutable=True, type_name=None):
         self.vars[name] = {"value": value, "mutable": mutable, "type": type_name}
 
-    def get(self, name):
+    def get(self, name, line=None):
         if name in self.vars: return self.vars[name]["value"]
-        if self.parent: return self.parent.get(name)
-        raise AuroraRuntimeError(f"Undefined variable '{name}'")
+        if self.parent: return self.parent.get(name, line)  # carry the use site up the scope chain
+        raise AuroraRuntimeError(f"Undefined variable '{name}'", line)
 
     def assign(self, name, value, line=None):
         if name in self.vars:

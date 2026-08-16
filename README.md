@@ -226,6 +226,21 @@ Source Code
 - **Environment** (`src/environment.py`) — Scoped variable store that supports mutability, closures, and block scoping.
 - **Interpreter** (`src/interpreter.py`) — Walks the AST and evaluates each node. Handles type checking, function calls, class instantiation, and built-in methods.
 
+### Error messages
+
+Every AST node carries the source line it was parsed from, so lexer, parser, and
+runtime errors all report a location:
+
+```
+[Line 4] Runtime Error: Index 5 out of bounds (len=3)
+[Line 4] Runtime Error: 'add' expects 2 args, got 1
+[Line 3] Runtime Error: Type error: 'x' declared as Int but got String
+```
+
+Errors are attributed to the code that caused them rather than the code that
+defines it — a wrong argument count points at the **call site**, not at the
+function declaration, while a bad return value points at the function.
+
 ---
 
 ## IDE Screenshot
