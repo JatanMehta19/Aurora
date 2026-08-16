@@ -241,6 +241,23 @@ The built-in IDE features:
 
 ---
 
+## Browser Playground
+
+**[Try Aurora in your browser](https://jatanmehta19.github.io/Aurora/)** — the same
+interpreter, compiled to WebAssembly with [Pyodide](https://pyodide.org) and running
+entirely in the page. No server executes your code, and nothing is installed.
+
+The playground loads `src/` unmodified. The CLI, the Tkinter IDE, the test suite, and the
+web page are all consumers of the same `run_source(source, output_fn)` entry point, so
+porting to the browser required no changes to the language implementation. All 12 bundled
+examples produce output byte-identical to the committed snapshots in `tests/golden/`.
+
+**Known limitation:** the interpreter runs on the browser's main thread, so an infinite
+loop (`while true { }`) freezes the tab until you close it. Moving Pyodide into a Web
+Worker would make a Stop button possible; that isn't implemented yet.
+
+---
+
 ## License
 
 Released under the [MIT License](LICENSE).
