@@ -54,7 +54,7 @@ class Parser:
         if self.match(TokenType.FOR): return self.parse_for()
         if self.match(TokenType.RETURN): return self.parse_return()
         if self.match(TokenType.BREAK):
-            self.advance(); self.expect(TokenType.SEMICOLON); return BreakStatement()
+            btok = self.advance(); self.expect(TokenType.SEMICOLON); return BreakStatement(btok.line)
         if self.match(TokenType.IMPORT): return self.parse_import()
         if self.match(TokenType.PRINT): return self.parse_print()
         return self.parse_expr_stmt()
@@ -96,17 +96,17 @@ class Parser:
 
     def parse_class(self):
         """classDecl → 'class' IDENTIFIER '{' funcDecl* '}'"""
-        self.expect(TokenType.CLASS)
+        ctok = self.expect(TokenType.CLASS)
         name = self.expect(TokenType.IDENTIFIER).value
         self.expect(TokenType.LBRACE)
         methods = []
         while not self.match(TokenType.RBRACE): methods.append(self.parse_func())
         self.expect(TokenType.RBRACE)
-        return ClassDecl(name=name, methods=methods)
+        return ClassDecl(name=name, methods=methods, line=ctok.line)
 
     def parse_if(self):
         """ifStmt → 'if' expression block ('else' ('if' ifStmt | block))?"""
-        self.expect(TokenType.IF)
+        itok = self.expect(TokenType.IF)
         cond = self.parse_expr()
         self.expect(TokenType.LBRACE); then = self.parse_block(); self.expect(TokenType.RBRACE)
         els = None
@@ -114,45 +114,45 @@ class Parser:
             self.advance()
             if self.match(TokenType.IF): els = [self.parse_if()]
             else: self.expect(TokenType.LBRACE); els = self.parse_block(); self.expect(TokenType.RBRACE)
-        return IfStatement(condition=cond, then_block=then, else_block=els)
+        return IfStatement(condition=cond, then_block=then, else_block=els, line=itok.line)
 
     def parse_while(self):
         """whileStmt → 'while' expression block"""
-        self.expect(TokenType.WHILE)
+        wtok = self.expect(TokenType.WHILE)
         cond = self.parse_expr()
         self.expect(TokenType.LBRACE); body = self.parse_block(); self.expect(TokenType.RBRACE)
-        return WhileStatement(condition=cond, body=body)
+        return WhileStatement(condition=cond, body=body, line=wtok.line)
 
     def parse_for(self):
         """forStmt → 'for' IDENTIFIER 'in' expression block"""
-        self.expect(TokenType.FOR)
+        ftok = self.expect(TokenType.FOR)
         var = self.expect(TokenType.IDENTIFIER).value
         self.expect(TokenType.IN)
         it = self.parse_expr()
         self.expect(TokenType.LBRACE); body = self.parse_block(); self.expect(TokenType.RBRACE)
-        return ForStatement(variable=var, iterable=it, body=body)
+        return ForStatement(variable=var, iterable=it, body=body, line=ftok.line)
 
     def parse_return(self):
         """returnStmt → 'return' expression? ';'"""
-        self.expect(TokenType.RETURN)
+        rtok = self.expect(TokenType.RETURN)
         val = None if self.match(TokenType.SEMICOLON) else self.parse_expr()
         self.expect(TokenType.SEMICOLON)
-        return ReturnStatement(value=val)
+        return ReturnStatement(value=val, line=rtok.line)
 
     def parse_import(self):
         """importStmt → 'import' IDENTIFIER ';'"""
-        self.expect(TokenType.IMPORT)
+        itok = self.expect(TokenType.IMPORT)
         name = self.expect(TokenType.IDENTIFIER).value
         self.expect(TokenType.SEMICOLON)
-        return ImportStatement(module_name=name)
+        return ImportStatement(module_name=name, line=itok.line)
 
     def parse_print(self):
         """printStmt → 'print' '(' expression ')' ';'"""
-        self.expect(TokenType.PRINT)
+        ptok = self.expect(TokenType.PRINT)
         self.expect(TokenType.LPAREN)
         expr = self.parse_expr()
         self.expect(TokenType.RPAREN); self.expect(TokenType.SEMICOLON)
-        return PrintStatement(expression=expr)
+        return PrintStatement(expression=expr, line=ptok.line)
 
     def parse_expr_stmt(self):
         """exprStmt → expression ('=' expression)? ';'  (assignment or bare expr)"""
@@ -162,7 +162,7 @@ class Parser:
             self.advance(); val = self.parse_expr(); self.expect(TokenType.SEMICOLON)
             return AssignStatement(target=expr, value=val, line=ln)
         self.expect(TokenType.SEMICOLON)
-        return ExprStatement(expression=expr)
+        return ExprStatement(expression=expr, line=ln)
 
     def parse_block(self):
         """block → statement* (until '}')"""
@@ -173,60 +173,73 @@ class Parser:
     # ── Expression hierarchy (precedence: low to high) ──────────────────────
     def parse_expr(self): return self.parse_or()
 
+    # Each binary rule binds the operator token *before* parsing the right-hand
+    # side. Inlining self.advance() into the constructor call would still consume
+    # the operator first (Python evaluates arguments left to right), but it throws
+    # the token away, and with it the line the operator sits on.
     def parse_or(self):
         """expression → andExpr ('or' andExpr)*"""
         l = self.parse_and()
         while self.match(TokenType.OR):
-            l = BinaryExpression(l, self.advance().value, self.parse_and())
+            op = self.advance()
+            l = BinaryExpression(l, op.value, self.parse_and(), op.line)
         return l
 
     def parse_and(self):
         """andExpr → notExpr ('and' notExpr)*"""
         l = self.parse_not()
         while self.match(TokenType.AND):
-            l = BinaryExpression(l, self.advance().value, self.parse_not())
+            op = self.advance()
+            l = BinaryExpression(l, op.value, self.parse_not(), op.line)
         return l
 
     def parse_not(self):
         """notExpr → 'not' notExpr | equalityExpr"""
         if self.match(TokenType.NOT):
-            return UnaryExpression(self.advance().value, self.parse_not())
+            op = self.advance()
+            return UnaryExpression(op.value, self.parse_not(), op.line)
         return self.parse_eq()
 
     def parse_eq(self):
         """equalityExpr → comparisonExpr (('==' | '!=') comparisonExpr)*"""
         l = self.parse_cmp()
         while self.match(TokenType.EQUAL_EQUAL, TokenType.BANG_EQUAL):
-            l = BinaryExpression(l, self.advance().value, self.parse_cmp())
+            op = self.advance()
+            l = BinaryExpression(l, op.value, self.parse_cmp(), op.line)
         return l
 
     def parse_cmp(self):
         """comparisonExpr → additionExpr (('<'|'<='|'>'|'>='|'..') additionExpr)*"""
         l = self.parse_add()
         while self.match(TokenType.LESS, TokenType.LESS_EQUAL, TokenType.GREATER, TokenType.GREATER_EQUAL):
-            l = BinaryExpression(l, self.advance().value, self.parse_add())
+            op = self.advance()
+            l = BinaryExpression(l, op.value, self.parse_add(), op.line)
         if self.match(TokenType.DOT_DOT):
-            l = BinaryExpression(l, self.advance().value, self.parse_add())
+            op = self.advance()
+            l = BinaryExpression(l, op.value, self.parse_add(), op.line)
         return l
 
     def parse_add(self):
         """additionExpr → multiplicationExpr (('+' | '-') multiplicationExpr)*"""
         l = self.parse_mul()
         while self.match(TokenType.PLUS, TokenType.MINUS):
-            l = BinaryExpression(l, self.advance().value, self.parse_mul())
+            op = self.advance()
+            l = BinaryExpression(l, op.value, self.parse_mul(), op.line)
         return l
 
     def parse_mul(self):
         """multiplicationExpr → unaryExpr (('*' | '/' | '%') unaryExpr)*"""
         l = self.parse_unary()
         while self.match(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT):
-            l = BinaryExpression(l, self.advance().value, self.parse_unary())
+            op = self.advance()
+            l = BinaryExpression(l, op.value, self.parse_unary(), op.line)
         return l
 
     def parse_unary(self):
         """unaryExpr → '-' unaryExpr | callExpr"""
         if self.match(TokenType.MINUS):
-            return UnaryExpression(self.advance().value, self.parse_unary())
+            op = self.advance()
+            return UnaryExpression(op.value, self.parse_unary(), op.line)
         return self.parse_call()
 
     def parse_call(self):
@@ -234,19 +247,19 @@ class Parser:
         expr = self.parse_primary()
         while True:
             if self.match(TokenType.LPAREN):
-                self.advance()
+                tok = self.advance()
                 args = []
                 if not self.match(TokenType.RPAREN):
                     args.append(self.parse_expr())
                     while self.match(TokenType.COMMA): self.advance(); args.append(self.parse_expr())
                 self.expect(TokenType.RPAREN)
-                expr = CallExpression(callee=expr, args=args)
+                expr = CallExpression(callee=expr, args=args, line=tok.line)
             elif self.match(TokenType.LBRACKET):
-                self.advance(); idx = self.parse_expr(); self.expect(TokenType.RBRACKET)
-                expr = IndexAccess(obj=expr, index=idx)
+                tok = self.advance(); idx = self.parse_expr(); self.expect(TokenType.RBRACKET)
+                expr = IndexAccess(obj=expr, index=idx, line=tok.line)
             elif self.match(TokenType.DOT):
-                self.advance(); name = self.expect(TokenType.IDENTIFIER).value
-                expr = PropertyAccess(obj=expr, name=name)
+                tok = self.advance(); name = self.expect(TokenType.IDENTIFIER).value
+                expr = PropertyAccess(obj=expr, name=name, line=tok.line)
             else:
                 break
         return expr
@@ -254,13 +267,13 @@ class Parser:
     def parse_primary(self):
         """primaryExpr → literal | IDENTIFIER | '(' expression ')' | list | map"""
         t = self.cur()
-        if t.type == TokenType.INTEGER: self.advance(); return IntegerLiteral(int(t.value))
-        if t.type == TokenType.FLOAT: self.advance(); return FloatLiteral(float(t.value))
-        if t.type == TokenType.STRING: self.advance(); return StringLiteral(t.value)
-        if t.type == TokenType.TRUE: self.advance(); return BoolLiteral(True)
-        if t.type == TokenType.FALSE: self.advance(); return BoolLiteral(False)
-        if t.type == TokenType.NULL: self.advance(); return NullLiteral()
-        if t.type == TokenType.IDENTIFIER: self.advance(); return Identifier(t.name if hasattr(t,"name") else t.value)
+        if t.type == TokenType.INTEGER: self.advance(); return IntegerLiteral(int(t.value), t.line)
+        if t.type == TokenType.FLOAT: self.advance(); return FloatLiteral(float(t.value), t.line)
+        if t.type == TokenType.STRING: self.advance(); return StringLiteral(t.value, t.line)
+        if t.type == TokenType.TRUE: self.advance(); return BoolLiteral(True, t.line)
+        if t.type == TokenType.FALSE: self.advance(); return BoolLiteral(False, t.line)
+        if t.type == TokenType.NULL: self.advance(); return NullLiteral(t.line)
+        if t.type == TokenType.IDENTIFIER: self.advance(); return Identifier(t.value, t.line)
         if t.type == TokenType.LPAREN:
             self.advance(); e = self.parse_expr(); self.expect(TokenType.RPAREN); return e
         if t.type == TokenType.LBRACKET:
@@ -268,7 +281,7 @@ class Parser:
             if not self.match(TokenType.RBRACKET):
                 elems.append(self.parse_expr())
                 while self.match(TokenType.COMMA): self.advance(); elems.append(self.parse_expr())
-            self.expect(TokenType.RBRACKET); return ListLiteral(elems)
+            self.expect(TokenType.RBRACKET); return ListLiteral(elems, t.line)
         if t.type == TokenType.LBRACE:
             self.advance(); pairs = []
             if not self.match(TokenType.RBRACE):
@@ -277,5 +290,5 @@ class Parser:
                 while self.match(TokenType.COMMA):
                     self.advance(); k = self.parse_expr(); self.expect(TokenType.COLON); v = self.parse_expr()
                     pairs.append((k,v))
-            self.expect(TokenType.RBRACE); return MapLiteral(pairs)
+            self.expect(TokenType.RBRACE); return MapLiteral(pairs, t.line)
         raise ParseError(f"Unexpected token '{t.value}'", t.line)
